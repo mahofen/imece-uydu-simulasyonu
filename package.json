@@ -1,0 +1,41 @@
+{
+  "name": "imece-uydu-simulasyonu",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "TÜBİTAK UZAY İMECE Yer Gözlem Uydusu 3B Etkileşimli Uzay Simülasyonu",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "imece",
+    "tubitak-uzay",
+    "satellite",
+    "space",
+    "threejs",
+    "simulation"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "devDependencies": {
+    "@react-three/drei": "^9.117.3",
+    "@react-three/fiber": "^8.17.10",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.170.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "canvas-confetti": "^1.9.4",
+    "esbuild": "^0.28.2",
+    "gsap": "^3.15.0",
+    "lucide-react": "^1.61.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.170.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}

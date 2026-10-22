@@ -1,0 +1,788 @@
+:root {
+    --bg-dark: #020409;
+    --panel-bg: rgba(9, 16, 29, 0.88);
+    --panel-border: rgba(56, 189, 248, 0.28);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent-cyan: #38bdf8;
+    --accent-blue: #0284c7;
+    --accent-gold: #f59e0b;
+    --accent-red: #ef4444;
+    --accent-emerald: #10b981;
+    --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'Consolas', 'Courier New', monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-dark);
+    font-family: var(--font-main);
+    color: var(--text-primary);
+}
+
+#webgl-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    display: block;
+}
+
+/* =========================================
+   TELESKOP GÖZLEM NİŞANGAHI (CAMERA RETICLE)
+   ========================================= */
+.camera-reticle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 320px;
+    height: 320px;
+    pointer-events: none;
+    z-index: 8;
+}
+
+.reticle-circle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 1.5px dashed rgba(56, 189, 248, 0.6);
+    border-radius: 50%;
+    animation: rotateReticle 40s linear infinite;
+}
+
+@keyframes rotateReticle {
+    to { transform: rotate(360deg); }
+}
+
+.reticle-crosshair-h {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    width: 80%;
+    height: 1px;
+    background: rgba(56, 189, 248, 0.4);
+}
+
+.reticle-crosshair-v {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    width: 1px;
+    height: 80%;
+    background: rgba(56, 189, 248, 0.4);
+}
+
+.reticle-target-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px;
+    height: 70px;
+    border: 2px solid var(--accent-cyan);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+}
+
+.target-label {
+    position: absolute;
+    top: -24px;
+    left: -65px;
+    width: 200px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    letter-spacing: 0.5px;
+    background: rgba(2, 4, 9, 0.8);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.reticle-swath-indicator {
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-emerald);
+    background: rgba(2, 4, 9, 0.8);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+/* =========================================
+   HUD & UI CONTAINER
+   ========================================= */
+#hud-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px 20px;
+}
+
+/* ÜST PANEL */
+.hud-header {
+    pointer-events: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.mission-title-box {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(14px);
+    border-radius: 12px;
+    padding: 12px 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    max-width: 440px;
+}
+
+.flag-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.mini-flag {
+    width: 26px;
+    height: 17px;
+    border-radius: 3px;
+    box-shadow: 0 0 8px rgba(227, 10, 23, 0.6);
+}
+
+.mission-title-box h1 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #ffffff;
+}
+
+.mission-title-box .badge {
+    background: rgba(56, 189, 248, 0.16);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+}
+
+.mission-title-box .badge-sso {
+    background: rgba(245, 158, 11, 0.16);
+    color: var(--accent-gold);
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.mission-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* GÖZLEMCİ REFERANS MODLARI SEÇİCİ */
+.observer-mode-bar {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(14px);
+    border-radius: 24px;
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.observer-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    padding: 6px 13px;
+    border-radius: 18px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.observer-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--accent-cyan);
+}
+
+.observer-btn.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-cyan);
+    color: #ffffff;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+}
+
+/* TELEMETRİ KARTLARI */
+.telemetry-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.telemetry-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(14px);
+    border-radius: 8px;
+    padding: 8px 12px;
+    min-width: 104px;
+    text-align: center;
+}
+
+.telemetry-label {
+    font-size: 9px;
+    color: var(--text-secondary);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.telemetry-value {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    margin-top: 2px;
+}
+
+/* =========================================
+   ORTA ALAN: SOL ALT SİSTEM DOCK & SAĞ İRTİFA CETVELİ
+   ========================================= */
+.hud-center {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.subsystem-nav {
+    pointer-events: auto;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(14px);
+    border-radius: 12px;
+    padding: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    max-width: 235px;
+}
+
+.nav-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.subsystem-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    padding: 6.5px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.subsystem-btn:hover {
+    background: rgba(56, 189, 248, 0.16);
+    border-color: var(--accent-cyan);
+    transform: translateX(4px);
+    color: #ffffff;
+}
+
+/* =========================================
+   İRTİFA VE MESAFE CETVELİ (ALTITUDE GAUGE)
+   ========================================= */
+.altitude-gauge-container {
+    pointer-events: auto;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(14px);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    max-width: 260px;
+}
+
+.gauge-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 4px;
+}
+
+.gauge-track {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+}
+
+.gauge-track::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: linear-gradient(to bottom, #f59e0b, #38bdf8, #10b981);
+}
+
+.gauge-marker {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.gauge-marker:hover {
+    transform: translateX(-3px);
+}
+
+.marker-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #0284c7;
+    border: 2px solid #ffffff;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.marker-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.marker-info strong {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #ffffff;
+}
+
+.marker-info small {
+    font-size: 10.5px;
+    color: var(--text-secondary);
+}
+
+.active-orbit {
+    background: rgba(56, 189, 248, 0.12);
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.pulse-beacon {
+    background: #f59e0b !important;
+    border-color: #fef3c7 !important;
+    box-shadow: 0 0 10px #f59e0b;
+    animation: pulseMarker 1.4s infinite;
+}
+
+@keyframes pulseMarker {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+}
+
+.badge-active {
+    background: var(--accent-gold);
+    color: #000;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-top: 1px;
+    display: inline-block;
+    width: fit-content;
+}
+
+/* =========================================
+   ALT ARAÇ ÇUBUĞU VE ZAMAN KONTROLLERİ
+   ========================================= */
+.hud-footer {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.controls-toolbar {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(14px);
+    border-radius: 30px;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    max-width: 96vw;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.tool-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: 18px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tool-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--accent-cyan);
+}
+
+.tool-btn.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-cyan);
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0 3px;
+}
+
+/* ZAMAN HIZLANDIRMA */
+.time-warp-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 2px 6px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.time-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-right: 3px;
+}
+
+.speed-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.speed-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.speed-btn.active {
+    background: var(--accent-cyan);
+    color: #000;
+}
+
+.hint-bar {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    background: rgba(2, 4, 9, 0.78);
+    padding: 4px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* =========================================
+   MALZEME ANALİZİ YAN ÇEKMECESİ
+   ========================================= */
+.materials-drawer {
+    position: absolute;
+    right: 20px;
+    bottom: 85px;
+    width: 380px;
+    background: var(--panel-bg);
+    border: 1px solid var(--accent-gold);
+    backdrop-filter: blur(16px);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(245, 158, 11, 0.2);
+    display: none;
+    pointer-events: auto;
+    z-index: 20;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.materials-drawer.visible {
+    display: block;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.materials-drawer h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.panel-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-bottom: 12px;
+}
+
+.material-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.mat-chip {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mat-chip:hover {
+    border-color: var(--accent-cyan);
+}
+
+.mat-chip.active {
+    background: rgba(56, 189, 248, 0.25);
+    border-color: var(--accent-cyan);
+    color: #ffffff;
+}
+
+.chip-mli.active { border-color: #f59e0b; background: rgba(245, 158, 11, 0.25); }
+.chip-solar.active { border-color: #38bdf8; background: rgba(56, 189, 248, 0.25); }
+.chip-cfrp.active { border-color: #94a3b8; background: rgba(148, 163, 184, 0.25); }
+.chip-metals.active { border-color: #e2e8f0; background: rgba(226, 232, 240, 0.25); }
+.chip-optics.active { border-color: #10b981; background: rgba(16, 185, 129, 0.25); }
+.chip-prop.active { border-color: #ef4444; background: rgba(239, 68, 68, 0.25); }
+
+.material-desc-box {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.material-desc-box strong {
+    color: var(--accent-cyan);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.material-desc-box p {
+    color: #cbd5e1;
+}
+
+/* =========================================
+   İNCELEME BİLGİ MODALI
+   ========================================= */
+.info-modal {
+    position: absolute;
+    right: 20px;
+    top: 90px;
+    width: 350px;
+    background: var(--panel-bg);
+    border: 1px solid var(--accent-cyan);
+    backdrop-filter: blur(16px);
+    border-radius: 14px;
+    padding: 18px;
+    z-index: 20;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75);
+    display: none;
+    pointer-events: auto;
+    animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.info-modal.visible {
+    display: block;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.category-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.modal-header h2 {
+    font-size: 16.5px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-top: 2px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+}
+
+.close-btn:hover {
+    color: #ffffff;
+}
+
+.modal-body p {
+    font-size: 12px;
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin-bottom: 10px;
+}
+
+.specs-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.specs-list {
+    list-style: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.specs-list li::before {
+    content: "▹ ";
+    color: var(--accent-cyan);
+}
+
+.disclaimer-text {
+    font-size: 9.5px;
+    color: #64748b;
+    margin-top: 10px;
+    line-height: 1.4;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 6px;
+}
+
+/* =========================================
+   MOBİL VE KÜÇÜK EKRAN UYUMLULUĞU
+   ========================================= */
+@media (max-width: 900px) {
+    .altitude-gauge-container {
+        display: none;
+    }
+    .subsystem-nav {
+        display: none;
+    }
+    .telemetry-bar {
+        display: none;
+    }
+    .materials-drawer {
+        width: auto;
+        left: 12px;
+        right: 12px;
+        bottom: 80px;
+    }
+}
